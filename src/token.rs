@@ -165,9 +165,6 @@ pub static MAX_OP_LEN: LazyLock<usize> = LazyLock::new(|| {
 // Static keyword set initialized once
 pub static KEYWORDS: LazyLock<HashSet<&'static str>> = LazyLock::new(|| {
     [
-        // "actualize",
-        // "align",
-        // "strategize",
         "with",
         "no",
         "deliverables",
@@ -220,7 +217,6 @@ impl Token {
             "evaluate" => Token::IF,
             "re-evaluate" => Token::ELIF,
             "pivot" => Token::ELSE,
-
             "below" => Token::LT,
             "above" | "excelling" => Token::GT,
             "is" => Token::EQ,
@@ -231,16 +227,6 @@ impl Token {
             "divide" | "disrupt" => Token::DIVIDE,
             "modulo" | "remainder" => Token::MODULO,
             "end" => Token::END,
-
-            // "below" => Token::OPERATOR(Token::LT),
-            // "above" | "excelling" => Token::OPERATOR(Token::GT),
-            // "is" => Token::OPERATOR(Token::EQ),
-            // "achieving" => Token::OPERATOR(Token::GEQ),
-            // "add" | "value-add" | "increase" | "plus" => Token::OPERATOR(Token::PLUS),
-            // "reduce" | "streamline" | "subtract" | "cut" => Token::OPERATOR(Token::MINUS),
-            // "multiply" | "amplify" | "boost" => Token::OPERATOR(Token::MULTIPLY),
-            // "divide" | "disrupt" => Token::OPERATOR(Token::DIVIDE),
-            // "modulo" | "remainder" => Token::OPERATOR(Token::MODULO),
             "true" | "actionable" => Token::BOOLEAN(true),
             "false" => Token::BOOLEAN(false),
             s if KEYWORDS.contains(s) => Token::KEYWORD(ident),
@@ -248,27 +234,6 @@ impl Token {
         }
     }
 }
-
-// impl fmt::Display for Operator {
-//     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-//         match self {
-//             Token::PLUS => write!(f, "PLUS"),
-//             Token::MINUS => write!(f, "MINUS"),
-//             Token::MULTIPLY => write!(f, "MULTIPLY"),
-//             Token::DIVIDE => write!(f, "DIVIDE"),
-//             Token::NEGATE => write!(f, "NEGATE"),
-//             Token::AND => write!(f, "AND"),
-//             Token::OR => write!(f, "OR"),
-//             Token::LT => write!(f, "LT"),
-//             Token::GT => write!(f, "GT"),
-//             Token::EQ => write!(f, "EQ"),
-//             Token::NEQ => write!(f, "NEQ"),
-//             Token::LEQ => write!(f, "LEQ"),
-//             Token::GEQ => write!(f, "GEQ"),
-//             Token::MODULO => write!(f, "MODULO"),
-//         }
-//     }
-// }
 
 impl fmt::Display for Token {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -279,7 +244,6 @@ impl fmt::Display for Token {
             Token::NUMBER(n) => write!(f, "NUMBER({})", n),
             Token::STRING(s) => write!(f, "STRING({})", s),
             Token::BOOLEAN(b) => write!(f, "BOOLEAN({})", b),
-            // Token::OPERATOR(o) => write!(f, "OPERATOR{}", o),
             Token::DECLARATION => write!(f, "DECLARTION"),
 
             Token::KEYWORD(k) => write!(f, "KEYWORD({})", k),
@@ -292,7 +256,6 @@ impl fmt::Display for Token {
             Token::ELSE => write!(f, "else"),
             Token::SEMICOLON => write!(f, ":"),
             Token::EOL => write!(f, "\\n"),
-            // Token::OPERATOR(o) => write!(f, "OPERATOR({})", o),
             Token::PLUS => write!(f, "+"),
             Token::MINUS => write!(f, "-"),
             Token::NEGATE => write!(f, "!"),

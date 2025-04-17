@@ -155,8 +155,6 @@ impl Lexer {
                 }
 
                 return Token::from_str(op);
-
-                // return Some(Token::Operator(String::from(op)));
             }
         }
         None
@@ -179,7 +177,7 @@ impl Lexer {
 
     fn read_identifier(&mut self) -> Token {
         if let Some(op) = self.read_multiword_operator() {
-            return op; // Token::OPERATOR(op);
+            return op;
         }
 
         let position = self.position;

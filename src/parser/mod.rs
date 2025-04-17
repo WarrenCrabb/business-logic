@@ -45,7 +45,7 @@ impl Parser {
     pub fn parse(&mut self) -> Result<Program, Vec<String>> {
         let mut body = vec![];
         while !matches!(self.current, Token::EOF) {
-            if self.current != Token::EOL {
+            if self.current != Token::EOL && self.current != Token::BLANK {
                 body.push(self.parse_statement());
             }
             self.advance();

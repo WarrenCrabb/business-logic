@@ -248,17 +248,16 @@ fn test_conditional_with_else() {
     let input = r#"
 evaluate synergyScore greater than 50
 	1 + 2
-	5 + 5
 pivot
-	3 - 4 
+	3 - 4
 end
 "#;
-    // let input = r#"
-    //     evaluate synergyScore greater than 50
-    //       touch base with "On track"
-    //     pivot
-    //       touch base with "Needs optimization"
-    //     end
+    //     let input = r#"
+    // evaluate synergyScore greater than 50
+    // 	touch base with "On track"
+    // pivot
+    // 	touch base with "Needs optimization"
+    // end
     // "#;
     // let input = r#"
     //     evaluate synergyScore greater than 50
@@ -274,126 +273,129 @@ end
 
     print!("prog: {:?}", program);
 
-    // assert_eq!(program.body.len(), 1);
-    // match &program.body[0] {
-    //     Statement::ExpressionStatement(value) => match value {
-    //         Expression::Conditional {
-    //             condition,
-    //             then_branch,
-    //             elif_branch,
-    //             else_branch,
-    //         } => {
-    //             match &**condition {
-    //                 Expression::Binary { operator, .. } => assert_eq!(operator, &Token::GT),
-    //                 _ => panic!("Expected binary expression for condition"),
-    //             }
-    //             // assert_eq!(then_branch.statements.len(), 1);
-    //             // assert_eq!(else_branch.as_ref().unwrap().statements.len(), 1);
-    //         }
-    //         _ => panic!("Expected Conditional"),
-    //     },
-    //     _ => panic!("Expected Conditional"),
-    // } // _ => panic!("Expected Conditional"),
+    assert_eq!(program.body.len(), 1);
+    match &program.body[0] {
+        Statement::ExpressionStatement(value) => match value {
+            Expression::Conditional {
+                condition,
+                then_branch,
+                elif_branch,
+                else_branch,
+            } => {
+                match &**condition {
+                    Expression::Binary { operator, .. } => assert_eq!(operator, &Token::GT),
+                    _ => panic!("Expected binary expression for condition"),
+                }
+                assert_eq!(then_branch.statements.len(), 1);
+                assert!(elif_branch.is_none());
+                assert_eq!(else_branch.as_ref().unwrap().statements.len(), 1);
+            }
+            _ => panic!("Expected Conditional"),
+        },
+        _ => panic!("Expected Conditional"),
+    } // _ => panic!("Expected Conditional"),
 }
 
-// #[test]
-// fn test_error_handling_invalid_syntax() {
-//     let input = "actualize align 123"; // Missing identifier
-//     let lexer = Lexer::new(input);
-//     let mut parser = Parser::new(lexer);
-//     let result = parser.parse();
+#[test]
+fn test_error_handling_invalid_syntax() {
+    let input = "actualize align 123"; // Missing identifier
+    let lexer = Lexer::new(input);
+    let mut parser = Parser::new(lexer);
+    let result = parser.parse();
 
-//     assert!(result.is_err());
-//     let errors = result.err().unwrap();
-//     assert!(errors.iter().any(|e| e.contains("Expected identifier")));
-// }
+    assert!(result.is_err());
+    let errors = result.err().unwrap();
+    assert!(errors.iter().any(|e| e.contains("Expected identifier")));
+}
 
-// #[test]
-// fn test_conditional_without_else() {
-//     let input = r#"
-//         evaluate score greater than 10
-//           touch base with "OK"
-//         end
-//     "#;
+#[test]
+fn test_conditional_without_else() {
+    let input = r#"
+evaluate score greater than 10
+	let x = 5
+end
+"#;
 
-//     let lexer = Lexer::new(input);
-//     let mut parser = Parser::new(lexer);
-//     let result = parser.parse();
+    let lexer = Lexer::new(input);
+    let mut parser = Parser::new(lexer);
+    let result = parser.parse();
 
-//     assert!(
-//         result.is_ok(),
-//         "Unexpected error: {:?}",
-//         result.unwrap_err()
-//     );
-//     let program = result.unwrap();
+    assert!(
+        result.is_ok(),
+        "Unexpected error: {:?}",
+        result.unwrap_err()
+    );
+    let program = result.unwrap();
 
-//     assert_eq!(program.body.len(), 1);
-//     match &program.body[0] {
-//         Statement::Conditional {
-//             condition,
-//             then_branch,
-//             else_branch,
-//         } => {
-//             assert_eq!(then_branch.statements.len(), 1);
-//             assert!(else_branch.is_none());
-//             match condition {
-//                 Expression::Binary { operator, .. } => assert_eq!(operator, &Operator::GT),
-//                 _ => panic!("Expected binary condition"),
-//             }
-//         }
-//         _ => panic!("Expected Conditional"),
-//     }
-// }
+    assert_eq!(program.body.len(), 1);
+    // match &program.body[0] {
+    //     Expression::Conditional {
+    //         condition,
+    //         then_branch,
+    //         else_branch,
+    //     } => {
+    //         assert_eq!(then_branch.statements.len(), 1);
+    //         assert!(else_branch.is_none());
+    //         match condition {
+    //             Expression::Binary { operator, .. } => assert_eq!(operator, &Operator::GT),
+    //             _ => panic!("Expected binary condition"),
+    //         }
+    //     }
+    //     _ => panic!("Expected Conditional"),
+    // }
+}
 
-// #[test]
-// fn test_nested_conditionals() {
-//     let input = r#"
-//         evaluate outerScore greater than 5
-//           evaluate innerScore greater than 3
-//             touch base with "Nested true"
-//           pivot
-//             touch base with "Nested false"
-//           end
-//         pivot
-//           touch base with "Outer false"
-//         end
-//         "#;
+#[test]
+fn test_nested_conditionals() {
+    let input = r#"
+evaluate outerScore greater than 5
+	evaluate innerScore greater than 3
+		1 + 2
+	pivot
+		3 + 4
+	end
+pivot
+	5 + 6
+end
+"#;
 
-//     // end
-//     let lexer = Lexer::new(input);
-//     let mut parser = Parser::new(lexer);
-//     let result = parser.parse();
-//     assert!(
-//         result.is_ok(),
-//         "Unexpected error: {:?}",
-//         result.unwrap_err()
-//     );
-//     let program = result.unwrap();
+    // end
+    let lexer = Lexer::new(input);
+    let mut parser = Parser::new(lexer);
+    let result = parser.parse();
+    assert!(
+        result.is_ok(),
+        "Unexpected error: {:?}",
+        result.unwrap_err()
+    );
+    let program = result.unwrap();
 
-//     assert_eq!(program.body.len(), 1);
-//     match &program.body[0] {
-//         Statement::Conditional {
-//             then_branch,
-//             else_branch,
-//             ..
-//         } => {
-//             assert_eq!(then_branch.statements.len(), 1);
-//             match &then_branch.statements[0] {
-//                 Statement::Conditional {
-//                     then_branch: inner_then,
-//                     else_branch: inner_else,
-//                     ..
-//                 } => {
-//                     assert_eq!(inner_then.statements.len(), 1);
-//                     assert_eq!(inner_else.as_ref().unwrap().statements.len(), 1);
-//                 }
-//                 _ => panic!("Expected nested Conditional"),
-//             }
-//             assert_eq!(else_branch.as_ref().unwrap().statements.len(), 1);
-//         }
-//         _ => panic!("Expected outer Conditional"),
-//     }
-// }
+    print!("PROGRAM: {:?}", program);
+
+    assert_eq!(program.body.len(), 1);
+    // match &program.body[0] {
+    //     Statement::Conditional {
+    //         then_branch,
+    //         else_branch,
+    //         ..
+    //     } => {
+    //         assert_eq!(then_branch.statements.len(), 1);
+    //         match &then_branch.statements[0] {
+    //             Statement::Conditional {
+    //                 then_branch: inner_then,
+    //                 else_branch: inner_else,
+    //                 ..
+    //             } => {
+    //                 assert_eq!(inner_then.statements.len(), 1);
+    //                 assert_eq!(inner_else.as_ref().unwrap().statements.len(), 1);
+    //             }
+    //             _ => panic!("Expected nested Conditional"),
+    //         }
+    //         assert_eq!(else_branch.as_ref().unwrap().statements.len(), 1);
+    //     }
+    //     _ => panic!("Expected outer Conditional"),
+    // }
+}
 
 // #[test]
 // fn test_conditional_with_no_body() {

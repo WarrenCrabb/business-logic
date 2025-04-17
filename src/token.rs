@@ -25,6 +25,9 @@ pub enum Token {
     IF,
     ELIF,
     ELSE,
+    SEMICOLON,
+
+    EOL,
 
     LPAREN,
     RPAREN,
@@ -43,6 +46,13 @@ pub enum Token {
     LEQ,
     GEQ,
     MODULO,
+
+    STDOUT,
+
+    INDENT,
+    DEDENT,
+
+    BLANK,
 }
 
 pub static OP_TOKENS: LazyLock<Vec<Token>> = LazyLock::new(|| {
@@ -64,7 +74,8 @@ pub static OP_TOKENS: LazyLock<Vec<Token>> = LazyLock::new(|| {
     ]
 });
 
-pub static END_TOKENS: LazyLock<Vec<Token>> = LazyLock::new(|| vec![Token::EOF, Token::END]);
+pub static END_TOKENS: LazyLock<Vec<Token>> =
+    LazyLock::new(|| vec![Token::EOF, Token::END, Token::EOL]);
 
 impl Token {
     pub fn from_str(s: &str) -> Option<Token> {
@@ -104,6 +115,7 @@ impl Token {
             "disrupt" => Some(Token::DIVIDE),
             "remainder" => Some(Token::MODULO),
             "modulo" => Some(Token::MODULO),
+            "touch base" => Some(Token::STDOUT),
             _ => None,
         }
     }
@@ -112,12 +124,13 @@ impl Token {
         OP_TOKENS.contains(t)
     }
     pub fn is_end_token(t: &Token) -> bool {
-        OP_TOKENS.contains(t)
+        END_TOKENS.contains(t)
     }
 }
 
 pub static MULTIWORD_OPERATORS: LazyLock<HashSet<&'static str>> = LazyLock::new(|| {
     [
+        "touch base",
         "greater than",
         "less than",
         "value-add",  // add
@@ -277,6 +290,8 @@ impl fmt::Display for Token {
             Token::IF => write!(f, "if"),
             Token::ELIF => write!(f, "elif"),
             Token::ELSE => write!(f, "else"),
+            Token::SEMICOLON => write!(f, ":"),
+            Token::EOL => write!(f, "\\n"),
             // Token::OPERATOR(o) => write!(f, "OPERATOR({})", o),
             Token::PLUS => write!(f, "+"),
             Token::MINUS => write!(f, "-"),
@@ -296,6 +311,11 @@ impl fmt::Display for Token {
 
             Token::LPAREN => write!(f, "("),
             Token::RPAREN => write!(f, ")"),
+
+            Token::STDOUT => write!(f, "PRINT"),
+            Token::INDENT => write!(f, "INDENT"),
+            Token::DEDENT => write!(f, "DEDENT"),
+            Token::BLANK => write!(f, "BLANK"),
         }
     }
 }

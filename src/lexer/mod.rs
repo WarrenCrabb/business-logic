@@ -11,6 +11,9 @@ pub struct Lexer {
     position: usize,
     read_position: usize,
     ch: char,
+    line: i64,
+    col: i64,
+    indent: i64,
 }
 
 impl Lexer {
@@ -20,12 +23,22 @@ impl Lexer {
             position: 0,
             read_position: 0,
             ch: '\0',
+            line: 1,
+            col: 0,
+            indent: 0,
         };
         lexer.read_char();
         lexer
     }
 
     fn read_char(&mut self) {
+        if self.ch == '\n' {
+            self.line += 1;
+            self.col = 1;
+        } else {
+            self.col += 1;
+        }
+
         if self.read_position >= self.input.len() {
             self.ch = '\0';
         } else {
@@ -35,14 +48,26 @@ impl Lexer {
         self.read_position += 1;
     }
 
-    pub fn next_token(&mut self) -> Token {
-        self.skip_whitespace();
+    pub fn current_indent(&self) -> i64 {
+        self.indent
+    }
 
+    pub fn next_token(&mut self) -> Token {
+        if let Some(token) = self.skip_blankline() {
+            return token;
+        }
+
+        if let Some(token) = self.count_indents() {
+            return token;
+        }
+
+        self.skip_whitespace();
         // if let Some(op) = self.read_multiword_operator() {
         //     return Token::OPERATOR(op);
         // }
 
         let token = match self.ch {
+            '\n' => Token::EOL,
             ';' => Token::END,
             '+' => Token::PLUS,
             '-' => Token::MINUS,
@@ -110,71 +135,6 @@ impl Lexer {
         token
     }
 
-    // pub fn next_token(&mut self) -> Token {
-    //     self.skip_whitespace();
-
-    //     // if let Some(op) = self.read_multiword_operator() {
-    //     //     return Token::OPERATOR(op);
-    //     // }
-
-    //     let token = match self.ch {
-    //         '+' => Token::OPERATOR(Operator::PLUS),
-    //         '-' => Token::OPERATOR(Operator::MINUS),
-    //         '*' => Token::OPERATOR(Operator::MULTIPLY),
-    //         '/' => Token::OPERATOR(Operator::DIVIDE),
-    //         '%' => Token::OPERATOR(Operator::MODULO),
-    //         '=' => Token::ASSIGN,
-    //         '!' => {
-    //             if self.peek_char() == '=' {
-    //                 self.read_char();
-    //                 Token::OPERATOR(Operator::NEQ)
-    //             } else {
-    //                 Token::OPERATOR(Operator::NEGATE)
-    //             }
-    //         }
-    //         '&' => {
-    //             if self.peek_char() == '&' {
-    //                 self.read_char();
-    //                 Token::OPERATOR(Operator::AND)
-    //             } else {
-    //                 Token::ILLEGAL
-    //             }
-    //         }
-    //         '|' => {
-    //             if self.peek_char() == '|' {
-    //                 self.read_char();
-    //                 Token::OPERATOR(Operator::OR)
-    //             } else {
-    //                 Token::ILLEGAL
-    //             }
-    //         }
-    //         '<' => {
-    //             if self.peek_char() == '=' {
-    //                 self.read_char();
-    //                 Token::OPERATOR(Operator::LEQ)
-    //             } else {
-    //                 Token::OPERATOR(Operator::LT)
-    //             }
-    //         }
-    //         '>' => {
-    //             if self.peek_char() == '=' {
-    //                 self.read_char();
-    //                 Token::OPERATOR(Operator::GEQ)
-    //             } else {
-    //                 Token::OPERATOR(Operator::GT)
-    //             }
-    //         }
-    //         'a'..='z' | 'A'..='Z' => return self.read_identifier(),
-    //         '0'..='9' => return self.read_number(),
-    //         '"' => return self.read_string(),
-    //         '\0' => Token::EOF,
-    //         _ => Token::ILLEGAL,
-    //     };
-
-    //     self.read_char();
-    //     token
-    // }
-
     fn read_multiword_operator(&mut self) -> Option<Token> {
         let max_op_len = *MAX_OP_LEN;
 
@@ -202,7 +162,7 @@ impl Lexer {
         None
     }
 
-    pub fn read_number(&mut self) -> Token {
+    fn read_number(&mut self) -> Token {
         let position = self.position;
         while Lexer::is_digit(self.ch) {
             self.read_char();
@@ -217,7 +177,7 @@ impl Lexer {
         )
     }
 
-    pub fn read_identifier(&mut self) -> Token {
+    fn read_identifier(&mut self) -> Token {
         if let Some(op) = self.read_multiword_operator() {
             return op; // Token::OPERATOR(op);
         }
@@ -235,13 +195,42 @@ impl Lexer {
         )
     }
 
+    fn count_indents(&mut self) -> Option<Token> {
+        if self.col == 1 {
+            let mut count_indent = 0;
+            while self.ch == '\t' {
+                count_indent += 1;
+                self.read_char();
+            }
+
+            if count_indent > self.indent {
+                self.indent = count_indent;
+                return Some(Token::INDENT);
+            } else if count_indent < self.indent {
+                self.indent = count_indent;
+                return Some(Token::DEDENT);
+            }
+        }
+
+        None
+    }
+
+    fn skip_blankline(&mut self) -> Option<Token> {
+        if self.ch == '\n' && self.col == 1 {
+            self.read_char();
+            return Some(Token::BLANK);
+        }
+        None
+    }
+
     fn skip_whitespace(&mut self) {
-        while self.ch == ' ' || self.ch == '\t' || self.ch == '\r' || self.ch == '\n' {
+        while self.ch == ' ' || self.ch == '\t' {
+            //|| self.ch == '\n' || self.ch == '\r' {
             self.read_char();
         }
     }
 
-    pub fn peek_char(&self) -> char {
+    fn peek_char(&self) -> char {
         if self.read_position >= self.input.len() {
             '\0'
         } else {
@@ -249,15 +238,15 @@ impl Lexer {
         }
     }
 
-    pub fn is_letter(ch: char) -> bool {
+    fn is_letter(ch: char) -> bool {
         ch.is_ascii_alphabetic() || ch == '_' || ch == '-'
     }
 
-    pub fn is_digit(ch: char) -> bool {
+    fn is_digit(ch: char) -> bool {
         ch.is_ascii_digit()
     }
 
-    pub fn read_string(&mut self) -> Token {
+    fn read_string(&mut self) -> Token {
         self.read_char(); // skip opening quote
 
         let start = self.position;

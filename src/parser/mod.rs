@@ -38,10 +38,16 @@ impl Parser {
         &self.current
     }
 
+    // fn current_indent(&self) {
+    // self.lexer.current_ind()
+    // }
+
     pub fn parse(&mut self) -> Result<Program, Vec<String>> {
         let mut body = vec![];
         while !matches!(self.current, Token::EOF) {
-            body.push(self.parse_statement());
+            if self.current != Token::EOL {
+                body.push(self.parse_statement());
+            }
             self.advance();
         }
 
@@ -56,6 +62,7 @@ impl Parser {
         match &self.current {
             Token::DECLARATION => self.parse_variable_declaration(),
             Token::RETURN => self.parse_return_statement(),
+            Token::BLANK | Token::EOL => Statement::EndLine,
             _ => self.parse_expression_statement(),
             // _ => {
             //     self.errors
@@ -70,7 +77,7 @@ impl Parser {
     fn parse_expression_statement(&mut self) -> Statement {
         let expression = self.parse_expression(Precedence::Lowest);
 
-        if self.peek_token == Token::END {
+        if Token::is_end_token(&self.peek_token) {
             self.advance();
         }
 
@@ -147,7 +154,6 @@ impl Parser {
         }
     }
 
-    // fn parse_expression_precedence(&mut self, precedence: Precedence) -> Expression {
     fn parse_expression(&mut self, precidence: Precedence) -> Expression {
         let mut left_exp = match &self.current {
             Token::MINUS | Token::NEGATE => self.parse_unary_expression(),
@@ -156,15 +162,15 @@ impl Parser {
             Token::STRING(s) => Expression::Literal(Literal::String(String::from(s))),
             Token::BOOLEAN(b) => Expression::Literal(Literal::Boolean(*b)),
             Token::LPAREN => self.parse_grouped_expresssion(),
+            Token::IF => self.parse_if_expression(),
             _ => panic!("Unexpected expression token {}", &self.current),
         };
 
-        // if Token::is_end_token(&self.peek_token) || precidence >= self.peek_precedence() {
-        //     return left_exp;
-        // }
+        if Token::is_end_token(&self.peek_token) || precidence >= self.peek_precedence() {
+            return left_exp;
+        }
 
         while !Token::is_end_token(&self.current) && precidence < self.peek_precedence() {
-            // while self.peek_token != Token::EOF && precidence < self.peek_precedence() {
             self.advance();
 
             left_exp = self.parse_binary_expression(left_exp);
@@ -181,6 +187,59 @@ impl Parser {
         let exp = self.parse_expression(Precedence::Lowest);
         self.expect_peek(Token::RPAREN);
         exp
+    }
+
+    fn parse_if_expression(&mut self) -> Expression {
+        self.advance();
+
+        let expr = self.parse_expression(Precedence::Lowest);
+
+        self.expect_peek(Token::EOL);
+        self.expect_peek(Token::INDENT);
+
+        let block = self.parse_block_statement();
+
+        let alt = if self.peek_token == Token::ELSE {
+            self.advance(); // skip DEDENT
+            self.advance(); // skip EOL
+
+            self.expect_peek(Token::INDENT);
+
+            Some(self.parse_block_statement())
+        } else {
+            None
+        };
+
+        self.expect_peek(Token::END);
+
+        Expression::Conditional {
+            condition: Box::new(expr),
+            then_branch: block,
+            elif_branch: None,
+            else_branch: alt,
+        }
+    }
+
+    fn parse_block_statement(&mut self) -> Block {
+        let mut statements = vec![];
+
+        self.advance();
+
+        // self.expect_peek(Token::INDENT);
+
+        while self.current != Token::DEDENT && self.current != Token::EOF {
+            let stmt = self.parse_statement();
+
+            statements.push(stmt);
+
+            self.advance();
+        }
+        // self.advance();
+
+        // if self.current == Token::EOL {
+        //     self.advance();
+        // }
+        Block { statements }
     }
 
     fn expect_operator(&mut self) -> Token {

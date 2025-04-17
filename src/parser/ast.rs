@@ -22,7 +22,7 @@ pub enum Expression {
     Variable(String),
     Conditional {
         condition: Box<Expression>,
-        then_branch: Box<Expression>,
+        then_branch: Block,
         elif_branch: Option<Block>,
         else_branch: Option<Block>,
     },
@@ -90,6 +90,15 @@ pub struct Block {
     pub statements: Vec<Statement>,
 }
 
+impl fmt::Display for Block {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        for stmt in &self.statements {
+            write!(f, "{}", stmt)?;
+        }
+        Ok(())
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct Identifier {
     pub value: String,
@@ -127,6 +136,7 @@ pub enum Statement {
     // },
     ReturnStatement(Expression),
     ExpressionStatement(Expression),
+    EndLine,
 }
 
 impl fmt::Display for Statement {
@@ -137,6 +147,7 @@ impl fmt::Display for Statement {
             }
             Statement::ReturnStatement(e) => write!(f, "return {}", e),
             Statement::ExpressionStatement(e) => write!(f, "{}", e),
+            Statement::EndLine => writeln!(f),
         }
     }
 }
@@ -174,7 +185,7 @@ pub fn precedence_of(op: &Token) -> Precedence {
         Token::EQ | Token::NEQ => Precedence::Equals,
         Token::LT | Token::LEQ | Token::GT | Token::GEQ => Precedence::LessGreater,
         Token::PLUS | Token::MINUS => Precedence::AddSub,
-        Token::MULTIPLY | Token::DIVIDE => Precedence::MultDiv,
+        Token::MULTIPLY | Token::DIVIDE | Token::MODULO => Precedence::MultDiv,
         _ => Precedence::Lowest,
     }
 }

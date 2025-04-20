@@ -13,13 +13,15 @@ pub struct Lexer {
     ch: char,
     line: i64,
     col: i64,
-    indent: i64,
+    indent: usize,
 }
+
+const TAB_WIDTH: usize = 2;
 
 impl Lexer {
     pub fn new(input: &str) -> Self {
         let mut lexer = Lexer {
-            input: input.chars().collect(),
+            input: input.trim().chars().collect(),
             position: 0,
             read_position: 0,
             ch: '\0',
@@ -48,7 +50,7 @@ impl Lexer {
         self.read_position += 1;
     }
 
-    pub fn current_indent(&self) -> i64 {
+    pub fn current_indent(&self) -> usize {
         self.indent
     }
 
@@ -62,9 +64,6 @@ impl Lexer {
         }
 
         self.skip_whitespace();
-        // if let Some(op) = self.read_multiword_operator() {
-        //     return Token::OPERATOR(op);
-        // }
 
         let token = match self.ch {
             '\n' => Token::EOL,
@@ -81,7 +80,7 @@ impl Lexer {
                     self.read_char();
                     Token::EQ
                 } else {
-                    Token::ASSIGN
+                    Token::BIND
                 }
             }
             '!' => {
@@ -124,9 +123,9 @@ impl Lexer {
                     Token::GT
                 }
             }
+            '"' => self.read_string(),
             'a'..='z' | 'A'..='Z' => return self.read_identifier(),
             '0'..='9' => return self.read_number(),
-            '"' => return self.read_string(),
             '\0' => Token::EOF,
             _ => Token::ILLEGAL,
         };
@@ -193,11 +192,19 @@ impl Lexer {
         )
     }
 
+    // fn measure_visual_indent()
+
     fn count_indents(&mut self) -> Option<Token> {
         if self.col == 1 {
             let mut count_indent = 0;
-            while self.ch == '\t' {
-                count_indent += 1;
+
+            while self.ch == '\t' || self.ch == ' ' {
+                count_indent += match self.ch {
+                    ' ' => 1,
+                    '\t' => TAB_WIDTH,
+                    _ => 0,
+                };
+                // count_indent += 1;
                 self.read_char();
             }
 
@@ -249,18 +256,12 @@ impl Lexer {
 
         let start = self.position;
 
-        while self.peek_char() != '"' && self.ch != '\0' {
+        while self.ch != '"' && self.ch != '\0' {
             self.read_char();
         }
 
-        if self.ch != '"' {
-            self.read_char();
-        }
+        let literal: String = self.input[start..self.position].iter().collect::<String>();
 
-        let literal = self.input[start..self.position].iter().collect::<String>();
-
-        self.read_char(); // skip closing quote
-
-        Token::STRING(String::from(literal))
+        Token::STRING(literal)
     }
 }

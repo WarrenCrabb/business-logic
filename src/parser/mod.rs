@@ -1,15 +1,15 @@
-use std::{backtrace, sync::RwLock};
-
 use crate::{
     lexer::Lexer,
     token::{OP_TOKENS, Token},
 };
 use ast::{Block, Expression, Identifier, Literal, Precedence, Program, Statement, precedence_of};
+use error::ParserError;
 
 #[cfg(test)]
 mod tests;
 
 pub mod ast;
+mod error;
 
 pub struct Parser {
     lexer: Lexer,
@@ -38,77 +38,62 @@ impl Parser {
         &self.current
     }
 
-    // fn current_indent(&self) {
-    // self.lexer.current_ind()
-    // }
-
-    pub fn parse(&mut self) -> Result<Program, Vec<String>> {
+    pub fn parse(&mut self) -> Result<Program, ParserError> {
         let mut body = vec![];
         while !matches!(self.current, Token::EOF) {
             if self.current != Token::EOL && self.current != Token::BLANK {
-                body.push(self.parse_statement());
+                body.push(self.parse_statement()?);
             }
             self.advance();
         }
 
-        if self.errors.is_empty() {
-            Ok(Program { body })
-        } else {
-            Err(self.errors.clone())
-        }
+        Ok(Program { body })
     }
 
-    fn parse_statement(&mut self) -> Statement {
+    fn parse_statement(&mut self) -> Result<Statement, ParserError> {
         match &self.current {
             Token::DECLARATION => self.parse_variable_declaration(),
             Token::RETURN => self.parse_return_statement(),
-            Token::BLANK | Token::EOL => Statement::EndLine,
+            Token::BLANK | Token::EOL => Ok(Statement::EndLine),
             _ => self.parse_expression_statement(),
-            // _ => {
-            //     self.errors
-            //         .push(format!("Unexpected token: {:?}", self.current));
-            //     Statement::Print {
-            //         value: Expression::Literal(Literal::String(String::from("error"))),
-            //     }
-            // }
         }
     }
 
-    fn parse_expression_statement(&mut self) -> Statement {
-        let expression = self.parse_expression(Precedence::Lowest);
+    fn parse_expression_statement(&mut self) -> Result<Statement, ParserError> {
+        let expression = self.parse_expression(Precedence::Lowest)?;
 
         if Token::is_end_token(&self.peek_token) {
             self.advance();
         }
 
-        Statement::ExpressionStatement(expression)
+        Ok(Statement::ExpressionStatement(expression))
     }
 
-    fn parse_unary_expression(&mut self) -> Expression {
+    fn parse_unary_expression(&mut self) -> Result<Expression, ParserError> {
         let operator = self.expect_operator();
 
         self.advance();
-        let right = self.parse_expression(Precedence::Prefix);
+        let right = self.parse_expression(Precedence::Prefix)?;
 
-        Expression::Unary {
+        Ok(Expression::Unary {
             operator,
             right: Box::new(right),
-        }
+        })
     }
 
-    fn parse_binary_expression(&mut self, left: Expression) -> Expression {
+    fn parse_binary_expression(&mut self, left: Expression) -> Result<Expression, ParserError> {
         let operator = self.expect_operator();
         let prec = self.current_precedence();
 
         self.advance();
 
-        let right = self.parse_expression(prec);
+        let right = self.parse_expression(prec)?;
 
-        Expression::Binary {
+        Ok(Expression::Binary {
             left: Box::new(left),
             operator,
             right: Box::new(right),
-        }
+        })
     }
 
     fn peek_precedence(&self) -> Precedence {
@@ -119,127 +104,187 @@ impl Parser {
         precedence_of(&self.current)
     }
 
-    fn parse_return_statement(&mut self) -> Statement {
+    fn parse_return_statement(&mut self) -> Result<Statement, ParserError> {
         self.advance();
-        let e = self.parse_expression(Precedence::Lowest);
-        Statement::ReturnStatement(e)
+        let e = self.parse_expression(Precedence::Lowest)?;
+
+        Ok(Statement::ReturnStatement(e))
     }
 
-    fn expect_identifier(&mut self) -> Identifier {
+    fn expect_identifier(&mut self) -> Result<Identifier, ParserError> {
         if let Token::IDENTIFIER(name) = &self.current {
-            Identifier {
+            Ok(Identifier {
                 value: name.clone(),
-            }
+            })
         } else {
-            self.errors
-                .push(format!("Expected identifier but got {:?}", self.current));
-            Identifier { value: "".into() }
+            Err(ParserError::new(String::from("Expected Identifier")))
         }
     }
 
-    fn parse_variable_declaration(&mut self) -> Statement {
-        self.advance(); // actualize
-
-        // self.expect_peek(Token::IDENTIFIER("synergyScore".into()));
-        let name = self.expect_identifier();
-
-        self.expect_peek(Token::ASSIGN);
-
+    fn parse_variable_declaration(&mut self) -> Result<Statement, ParserError> {
+        self.advance();
+        let identifier = self.expect_identifier()?;
+        self.expect_peek(Token::BIND)?;
         self.advance();
 
-        let value = self.parse_expression(Precedence::Lowest);
-        Statement::VariableDeclaration {
-            identifier: name,
-            value,
-        }
+        let value = self.parse_expression(Precedence::Lowest)?;
+
+        Ok(Statement::VariableDeclaration { identifier, value })
     }
 
-    fn parse_expression(&mut self, precidence: Precedence) -> Expression {
-        let mut left_exp = match &self.current {
-            Token::MINUS | Token::NEGATE => self.parse_unary_expression(),
-            Token::IDENTIFIER(i) => Expression::Identifier(String::from(i)),
+    fn parse_expression(&mut self, precidence: Precedence) -> Result<Expression, ParserError> {
+        let mut left_expr = match &self.current {
+            Token::MINUS | Token::NEGATE => self.parse_unary_expression()?,
+            Token::IDENTIFIER(i) => Expression::Identifier(Identifier::new(i.to_string())),
             Token::NUMBER(n) => Expression::Literal(Literal::Number(*n)),
             Token::STRING(s) => Expression::Literal(Literal::String(String::from(s))),
             Token::BOOLEAN(b) => Expression::Literal(Literal::Boolean(*b)),
-            Token::LPAREN => self.parse_grouped_expresssion(),
-            Token::IF => self.parse_if_expression(),
-            _ => panic!("Unexpected expression token {}", &self.current),
+            Token::LPAREN => self.parse_grouped_expresssion()?,
+            Token::IF => self.parse_if_expression()?,
+            Token::FUNCTION => self.parse_function_literal()?,
+            _ => {
+                return Err(ParserError::new(format!(
+                    "No prefix parse function for '{}' found",
+                    self.current
+                )));
+            }
         };
 
         if Token::is_end_token(&self.peek_token) || precidence >= self.peek_precedence() {
-            return left_exp;
+            return Ok(left_expr);
         }
 
         while !Token::is_end_token(&self.current) && precidence < self.peek_precedence() {
             self.advance();
-
-            left_exp = self.parse_binary_expression(left_exp);
+            if Token::is_operator(&self.current) {
+                left_expr = self.parse_binary_expression(left_expr)?;
+            } else if self.current == Token::CALL {
+                self.advance();
+                left_expr = self.parse_call_expression(left_expr)?;
+            }
         }
 
-        left_exp
-
-        // self.advance();
-        // return Expression::Literal(Literal::Number(100));
+        Ok(left_expr)
     }
 
-    fn parse_grouped_expresssion(&mut self) -> Expression {
+    fn parse_call_expression(&mut self, left: Expression) -> Result<Expression, ParserError> {
+        let arguments = self.parse_call_arguments()?;
+
+        Ok(Expression::CallExpression {
+            function: Box::new(left),
+            arguments,
+        })
+    }
+
+    fn parse_call_arguments(&mut self) -> Result<Vec<Expression>, ParserError> {
+        let mut args = vec![];
+
+        while !Token::is_end_token(&self.current) {
+            args.push(self.parse_expression(Precedence::Lowest)?);
+            self.advance();
+        }
+
+        self.advance();
+
+        Ok(args)
+    }
+
+    fn parse_function_literal(&mut self) -> Result<Expression, ParserError> {
+        self.advance();
+
+        let parameters = self.parse_function_parameters()?;
+
+        self.advance();
+
+        // if let ret = self.parse_return_statement() {}
+
+        if self.current == Token::RETURN {
+            // self.advance();
+
+            let e = self.parse_return_statement()?;
+
+            let body = Block {
+                statements: vec![e],
+            };
+
+            return Ok(Expression::FunctionLiteral { parameters, body });
+        }
+
+        self.expect_peek(Token::INDENT)?;
+
+        let body = self.parse_block_statement()?;
+
+        Ok(Expression::FunctionLiteral { parameters, body })
+    }
+
+    fn parse_function_parameters(&mut self) -> Result<Vec<Identifier>, ParserError> {
+        let mut identifiers = vec![];
+
+        while self.current != Token::BIND {
+            let i = self.expect_identifier()?;
+            identifiers.push(i);
+            self.advance();
+        }
+
+        Ok(identifiers)
+    }
+
+    fn parse_grouped_expresssion(&mut self) -> Result<Expression, ParserError> {
         self.advance();
         let exp = self.parse_expression(Precedence::Lowest);
-        self.expect_peek(Token::RPAREN);
+        self.expect_peek(Token::RPAREN)?;
         exp
     }
 
-    fn parse_if_expression(&mut self) -> Expression {
+    fn parse_if_expression(&mut self) -> Result<Expression, ParserError> {
         self.advance();
 
-        let expr = self.parse_expression(Precedence::Lowest);
+        let expr = self.parse_expression(Precedence::Lowest)?;
 
-        self.expect_peek(Token::EOL);
-        self.expect_peek(Token::INDENT);
+        self.expect_peek(Token::EOL)?;
 
-        let block = self.parse_block_statement();
+        let block = if self.peek_token != Token::END {
+            self.expect_peek(Token::INDENT)?;
+            self.parse_block_statement()?
+        } else {
+            Block { statements: vec![] }
+        };
 
         let alt = if self.peek_token == Token::ELSE {
             self.advance(); // skip DEDENT
             self.advance(); // skip EOL
 
-            self.expect_peek(Token::INDENT);
+            self.expect_peek(Token::INDENT)?;
 
-            Some(self.parse_block_statement())
+            Some(self.parse_block_statement()?)
         } else {
             None
         };
 
-        self.expect_peek(Token::END);
+        self.expect_peek(Token::END)?;
 
-        Expression::Conditional {
+        Ok(Expression::Conditional {
             condition: Box::new(expr),
             then_branch: block,
             elif_branch: None,
             else_branch: alt,
-        }
+        })
     }
 
-    fn parse_block_statement(&mut self) -> Block {
+    fn parse_block_statement(&mut self) -> Result<Block, ParserError> {
         let mut statements = vec![];
 
         self.advance();
 
-        // self.expect_peek(Token::INDENT);
-
         while self.current != Token::DEDENT && self.current != Token::EOF {
-            let stmt = self.parse_statement();
+            let stmt = self.parse_statement()?;
 
             statements.push(stmt);
 
             self.advance();
         }
-        // self.advance();
 
-        // if self.current == Token::EOL {
-        //     self.advance();
-        // }
-        Block { statements }
+        Ok(Block { statements })
     }
 
     fn expect_operator(&mut self) -> Token {
@@ -272,21 +317,23 @@ impl Parser {
     //     // }
     // }
 
-    fn expect_peek(&mut self, expected: Token) -> Option<Token> {
+    fn expect_peek(&mut self, expected: Token) -> Result<(), ParserError> {
         if self.peek_token == expected {
             self.advance();
-            Some(self.current.clone())
+            Ok(())
         } else {
-            self.peek_error(expected);
-            None
+            Err(ParserError::new(format!(
+                "expected next token to be '{}', but got '{}'",
+                expected, self.peek_token
+            )))
         }
     }
 
-    fn peek_error(&mut self, expected: Token) {
-        let msg = format!(
-            "Expected token {:?}, but got {:?}",
-            expected, self.peek_token
-        );
-        self.errors.push(msg);
-    }
+    // fn peek_error(&mut self, expected: Token) {
+    //     let msg = format!(
+    //         "Expected token {:?}, but got {:?}",
+    //         expected, self.peek_token
+    //     );
+    //     self.errors.push(msg);
+    // }
 }

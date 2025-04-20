@@ -1,14 +1,12 @@
 use core::fmt;
-use std::fmt::write;
 
 use crate::token::Token;
 
 /// AST nodes for Business Logic language
-// use crate::token::Operator;
 
 #[derive(Debug, Clone)]
 pub enum Expression {
-    Identifier(String),
+    Identifier(Identifier),
     Literal(Literal),
     Binary {
         left: Box<Expression>,
@@ -19,13 +17,22 @@ pub enum Expression {
         operator: Token,
         right: Box<Expression>,
     },
-    Variable(String),
     Conditional {
         condition: Box<Expression>,
         then_branch: Block,
         elif_branch: Option<Block>,
         else_branch: Option<Block>,
     },
+    FunctionLiteral {
+        parameters: Vec<Identifier>,
+        body: Block,
+    },
+    CallExpression {
+        function: Box<Expression>,
+        arguments: Vec<Expression>,
+    },
+    // Continue,
+    // Break,
     // Assignment {
     //     name: String,
     //     value: Expression,
@@ -34,8 +41,6 @@ pub enum Expression {
     //     condition: Expression,
     //     body: Block,
     // },
-    // Continue,
-    // Break,
     // Conditional {
     //     condition: Expression,
     //     then_branch: Block,
@@ -57,13 +62,33 @@ impl fmt::Display for Expression {
                 right,
             } => write!(f, "({} {} {})", left, operator, right),
             Expression::Unary { operator, right } => write!(f, "({}{})", operator, right),
-            Expression::Variable(s) => write!(f, "{}", s),
             Expression::Conditional {
                 condition,
                 then_branch,
                 elif_branch,
                 else_branch,
-            } => write!(f, "{}", "CONDITIONAL"),
+            } => write!(
+                f,
+                "{:#?} {:#?} {:#?} {:#?}",
+                condition, then_branch, elif_branch, else_branch
+            ),
+            Expression::FunctionLiteral { parameters, body } => {
+                write!(f, "{:#?} {:#?}", parameters, body)
+            }
+            Expression::CallExpression {
+                function,
+                arguments,
+            } => {
+                let args: Vec<String> = arguments
+                    .clone()
+                    .into_iter()
+                    .map(|param| format!("{:#?}", param))
+                    .collect();
+
+                let args = args.join(", ");
+
+                write!(f, "{:?} ({})", function, args)
+            }
         }
     }
 }
@@ -104,6 +129,12 @@ pub struct Identifier {
     pub value: String,
 }
 
+impl Identifier {
+    pub fn new(value: String) -> Identifier {
+        Identifier { value }
+    }
+}
+
 impl fmt::Display for Identifier {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.value)
@@ -116,24 +147,6 @@ pub enum Statement {
         identifier: Identifier,
         value: Expression,
     },
-    // Assignment {
-    //     name: String,
-    //     value: Expression,
-    // },
-    // Loop {
-    //     condition: Expression,
-    //     body: Block,
-    // },
-    // Continue,
-    // Break,
-    // Conditional {
-    //     condition: Expression,
-    //     then_branch: Block,
-    //     else_branch: Option<Block>,
-    // },
-    // Print {
-    //     value: Expression,
-    // },
     ReturnStatement(Expression),
     ExpressionStatement(Expression),
     EndLine,
@@ -186,17 +199,7 @@ pub fn precedence_of(op: &Token) -> Precedence {
         Token::LT | Token::LEQ | Token::GT | Token::GEQ => Precedence::LessGreater,
         Token::PLUS | Token::MINUS => Precedence::AddSub,
         Token::MULTIPLY | Token::DIVIDE | Token::MODULO => Precedence::MultDiv,
+        Token::CALL => Precedence::Call,
         _ => Precedence::Lowest,
     }
 }
-
-// pub fn precedence_of(op: &Operator) -> Precedence {
-//     match op {
-//         Operator::AND | Operator::OR => Precedence::AndOr,
-//         Operator::EQ | Operator::NEQ => Precedence::Equals,
-//         Operator::LT | Operator::LEQ | Operator::GT | Operator::GEQ => Precedence::LessGreater,
-//         Operator::PLUS | Operator::MINUS => Precedence::AddSub,
-//         Operator::MULTIPLY | Operator::DIVIDE => Precedence::MultDiv,
-//         _ => Precedence::Lowest,
-//     }
-// }

@@ -2,9 +2,9 @@ use std::io::{self, BufRead, Write};
 
 const PROMPT: &str = ">> ";
 
-// Assuming you have modules named `lexer` and `token` defined elsewhere.
+use crate::evaluator::eval;
 use crate::lexer::Lexer;
-use crate::token::Token;
+use crate::parser::Parser;
 
 pub fn start<R: BufRead, W: Write>(mut reader: R, mut writer: W) -> io::Result<()> {
     loop {
@@ -14,24 +14,36 @@ pub fn start<R: BufRead, W: Write>(mut reader: R, mut writer: W) -> io::Result<(
 
         // Read one line from input.
         let mut line = String::new();
+
         if reader.read_line(&mut line)? == 0 {
             // No more input (EOF reached).
             break;
         }
 
         // Create a new lexer with the input line.
-        let mut lex = Lexer::new(&line);
-        loop {
-            // Get the next token.
-            let tok: Token = lex.next_token();
-            // Print the token using Debug formatting.
-            writeln!(writer, "{:?}", tok)?;
+        let lexer = Lexer::new(&line);
+        let mut parser = Parser::new(lexer);
+        let result = parser.parse();
 
-            // Stop if we reached the EOF token.
-            if tok == Token::EOF {
-                break;
-            }
+        if result.is_err() {
+            let e = result.unwrap_err();
+            writeln!(writer, "ERROR: {} ", e.msg)?;
+            continue;
         }
+
+        let program = result.unwrap();
+
+        let evaluated = eval(program);
+
+        if evaluated.is_err() {
+            let e = evaluated.unwrap_err();
+            writeln!(writer, "ERROR: {} ", e.msg)?;
+            continue;
+        }
+
+        let r = evaluated.unwrap();
+
+        writeln!(writer, "{}", r)?;
     }
     Ok(())
 }

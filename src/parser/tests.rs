@@ -12,8 +12,6 @@ fn test_variable_declaration() {
     assert!(result.is_ok(), "Parser returned errors: {:?}", result.err());
     let program = result.unwrap();
 
-    print!("{}", program);
-
     assert_eq!(program.body.len(), 1);
     match &program.body[0] {
         Statement::VariableDeclaration { identifier, value } => {
@@ -103,94 +101,47 @@ fn test_unary_expression_negate() {
 
 #[test]
 fn test_parsing_infix_expressions() {
-    struct InfixTest {
-        input: String,
-        left_value: i64,
-        operator: Token,
-        right_value: i64,
-    }
-
     let inputs = [
         ("5 + 5", 5, Token::PLUS, 5),
+        ("5 value-add 5", 5, Token::PLUS, 5),
         ("5 - 5", 5, Token::MINUS, 5),
         ("5 * 5", 5, Token::MULTIPLY, 5),
         ("5 / 5", 5, Token::DIVIDE, 5),
         ("5 % 5", 5, Token::MODULO, 5),
-    ];
-
-    let tests = vec![
-        InfixTest {
-            input: String::from("5 + 5"),
-            left_value: 5,
-            operator: Token::PLUS,
-            right_value: 5,
-        },
-        InfixTest {
-            input: String::from("5 - 5"),
-            left_value: 5,
-            operator: Token::MINUS,
-            right_value: 5,
-        },
-        InfixTest {
-            input: String::from("5 * 5"),
-            left_value: 5,
-            operator: Token::MULTIPLY,
-            right_value: 5,
-        },
-        InfixTest {
-            input: String::from("5 / 5"),
-            left_value: 5,
-            operator: Token::DIVIDE,
-            right_value: 5,
-        },
-        InfixTest {
-            input: String::from("5 > 5"),
-            left_value: 5,
-            operator: Token::GT,
-            right_value: 5,
-        },
-        InfixTest {
-            input: String::from("5 < 5"),
-            left_value: 5,
-            operator: Token::LT,
-            right_value: 5,
-        },
-        InfixTest {
-            input: String::from("5 == 5"),
-            left_value: 5,
-            operator: Token::EQ,
-            right_value: 5,
-        },
-        InfixTest {
-            input: String::from("5 != 5"),
-            left_value: 5,
-            operator: Token::NEQ,
-            right_value: 5,
-        },
+        ("5 > 5", 5, Token::GT, 5),
+        ("5 < 5", 5, Token::LT, 5),
+        ("5 == 5", 5, Token::EQ, 5),
+        ("5 != 5", 5, Token::NEQ, 5),
     ];
 
     for (input, l, t, r) in inputs {
-        let l = Lexer::new(&input);
-        let mut p = Parser::new(l);
+        let lexer = Lexer::new(&input);
+        let mut p = Parser::new(lexer);
 
         let result = p.parse();
 
         assert!(result.is_ok(), "Parser returned errors: {:?}", result.err());
-        // let program = result.unwrap();
-        // print!("PROG: {:?}", program);
-        // assert_eq!(program.to_string(), expected);
-    }
 
-    for test in tests {
-        let l = Lexer::new(&test.input);
-        let mut p = Parser::new(l);
-
-        let result = p.parse();
-
-        assert!(result.is_ok(), "Parser returned errors: {:?}", result.err());
         let program = result.unwrap();
 
         assert_eq!(program.body.len(), 1);
+
+        match &program.body[0] {
+            Statement::ExpressionStatement(value) => match value {
+                Expression::Binary {
+                    left,
+                    operator,
+                    right,
+                } => {
+                    assert_eq!(left.to_string(), l.to_string());
+                    assert_eq!(operator, &t);
+                    assert_eq!(right.to_string(), r.to_string());
+                }
+
+                _ => panic!("Expected Binary"),
+            },
+            _ => panic!("Expected Expression Statement"),
+        }
     }
 }
 
@@ -271,8 +222,6 @@ end
     assert!(result.is_ok(), "Parser returned errors: {:?}", result.err());
     let program = result.unwrap();
 
-    print!("prog: {:?}", program);
-
     assert_eq!(program.body.len(), 1);
     match &program.body[0] {
         Statement::ExpressionStatement(value) => match value {
@@ -293,7 +242,7 @@ end
             _ => panic!("Expected Conditional"),
         },
         _ => panic!("Expected Conditional"),
-    } // _ => panic!("Expected Conditional"),
+    }
 }
 
 #[test]
@@ -305,13 +254,13 @@ fn test_error_handling_invalid_syntax() {
 
     assert!(result.is_err());
     let errors = result.err().unwrap();
-    assert!(errors.iter().any(|e| e.contains("Expected identifier")));
+    assert!(errors.msg.contains("Expected Identifier"))
 }
 
 #[test]
 fn test_conditional_without_else() {
     let input = r#"
-evaluate score greater than 10
+evaluate score above 10
 	let x = 5
 end
 "#;
@@ -370,7 +319,7 @@ end
     );
     let program = result.unwrap();
 
-    print!("PROGRAM: {:?}", program);
+    // print!("PROGRAM: {:#?}", program);
 
     assert_eq!(program.body.len(), 1);
     // match &program.body[0] {
@@ -397,37 +346,128 @@ end
     // }
 }
 
-// #[test]
-// fn test_conditional_with_no_body() {
-//     let input = r#"
-//         evaluate x greater than 0
-//         end
-//     "#;
+#[test]
+fn test_conditional_with_no_body() {
+    let input = r#"
+evaluate x exceeds 0
+end
+"#;
 
-//     let lexer = Lexer::new(input);
-//     let mut parser = Parser::new(lexer);
-//     let result = parser.parse();
+    let lexer = Lexer::new(input);
+    let mut parser = Parser::new(lexer);
+    let result = parser.parse();
 
-//     assert!(
-//         result.is_ok(),
-//         "Unexpected error: {:?}",
-//         result.unwrap_err()
-//     );
-//     let program = result.unwrap();
+    assert!(
+        result.is_ok(),
+        "Unexpected error: {:?}",
+        result.unwrap_err()
+    );
+    let program = result.unwrap();
 
-//     assert_eq!(program.body.len(), 1);
-//     match &program.body[0] {
-//         Statement::Conditional {
-//             then_branch,
-//             else_branch,
-//             ..
-//         } => {
-//             assert!(then_branch.statements.is_empty());
-//             assert!(else_branch.is_none());
-//         }
-//         _ => panic!("Expected Conditional"),
-//     }
-// }
+    assert_eq!(program.body.len(), 1);
+    // match &program.body[0] {
+    //     Expression::Conditional {
+    //         then_branch,
+    //         else_branch,
+    //         ..
+    //     } => {
+    //         assert!(then_branch.statements.is_empty());
+    //         assert!(else_branch.is_none());
+    //     }
+    //     _ => panic!("Expected Conditional"),
+    // }
+}
+
+#[test]
+fn test_function_literal_parsing() {
+    let input = r#"
+plan a b to
+	let c = a + b
+	deliver c
+"#;
+
+    let lexer = Lexer::new(input);
+    let mut parser = Parser::new(lexer);
+    let result = parser.parse();
+
+    assert!(
+        result.is_ok(),
+        "Unexpected error: {:?}",
+        result.unwrap_err()
+    );
+    let program = result.unwrap();
+
+    print!("FN {:#?}", program);
+
+    assert_eq!(program.body.len(), 1);
+}
+
+#[test]
+fn test_function_literal_with_no_parameters_parsing() {
+    let input = r#"
+plan to
+	deliver 5
+"#;
+
+    let lexer = Lexer::new(input);
+    let mut parser = Parser::new(lexer);
+    let result = parser.parse();
+
+    assert!(
+        result.is_ok(),
+        "Unexpected error: {:?}",
+        result.unwrap_err()
+    );
+    let program = result.unwrap();
+
+    print!("FN {:#?}", program);
+
+    assert_eq!(program.body.len(), 1);
+}
+
+#[test]
+fn test_function_literal_with_no_parameters_inline_parsing() {
+    let input = r#"
+plan to deliver 5
+"#;
+
+    let lexer = Lexer::new(input);
+    let mut parser = Parser::new(lexer);
+    let result = parser.parse();
+
+    assert!(
+        result.is_ok(),
+        "Unexpected error: {:?}",
+        result.unwrap_err()
+    );
+    let program = result.unwrap();
+
+    print!("FN {:#?}", program);
+
+    assert_eq!(program.body.len(), 1);
+}
+
+#[test]
+fn test_call_expression() {
+    let input = r#"
+boost_moral leverage "pizza party"
+"#;
+
+    let lexer = Lexer::new(input);
+    let mut parser = Parser::new(lexer);
+    let result = parser.parse();
+
+    assert!(
+        result.is_ok(),
+        "Unexpected error: {:?}",
+        result.unwrap_err()
+    );
+    let program = result.unwrap();
+
+    print!("FN {:#?}", program);
+
+    assert_eq!(program.body.len(), 1);
+}
 
 // #[test]
 // fn test_loop_with_circle_back_and_pivotaway() {
@@ -461,79 +501,5 @@ end
 //             assert!(matches!(body.statements[1], Statement::Break));
 //         }
 //         _ => panic!("Expected Loop statement"),
-//     }
-// }
-
-// #[test]
-// fn test_expression_statement_with_precedence() {
-//     let input = "5 value-add 5 multiply 10";
-//     let lexer = Lexer::new(input);
-//     let mut parser = Parser::new(lexer);
-//     let result = parser.parse();
-
-//     assert!(
-//         result.is_ok(),
-//         "Parser returned errors: {:?}",
-//         result.unwrap_err()
-//     );
-//     let program = result.unwrap();
-
-//     print!("{:?}", program);
-
-//     assert_eq!(program.body.len(), 1);
-//     match &program.body[0] {
-//         Statement::ExpressionStatement(expr) => match expr {
-//             Expression::Binary {
-//                 operator,
-//                 left,
-//                 right,
-//             } => {
-//                 assert_eq!(operator, &Operator::PLUS);
-//                 match **right {
-//                     Expression::Binary { ref operator, .. } => {
-//                         assert_eq!(operator, &Operator::MULTIPLY);
-//                     }
-//                     _ => panic!("Expected multiply inside nested binary expression"),
-//                 }
-//             }
-//             _ => panic!("Expected Binary Expression"),
-//         },
-//         _ => panic!("Expected ExpressionStatement"),
-//     }
-// }
-
-// #[test]
-// fn test_nested_precedence_expression() {
-//     let input = "2 multiply 3 value-add 4";
-//     let lexer = Lexer::new(input);
-//     let mut parser = Parser::new(lexer);
-//     let result = parser.parse();
-
-//     assert!(
-//         result.is_ok(),
-//         "Parser returned errors: {:?}",
-//         result.unwrap_err()
-//     );
-//     let program = result.unwrap();
-
-//     assert_eq!(program.body.len(), 1);
-//     match &program.body[0] {
-//         Statement::ExpressionStatement(expr) => match expr {
-//             Expression::Binary {
-//                 operator,
-//                 left,
-//                 right,
-//             } => {
-//                 assert_eq!(operator, &Operator::PLUS);
-//                 match **left {
-//                     Expression::Binary { ref operator, .. } => {
-//                         assert_eq!(operator, &Operator::MULTIPLY);
-//                     }
-//                     _ => panic!("Expected multiply inside nested binary expression"),
-//                 }
-//             }
-//             _ => panic!("Expected Binary Expression"),
-//         },
-//         _ => panic!("Expected ExpressionStatement"),
 //     }
 // }

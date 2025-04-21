@@ -158,7 +158,7 @@ fn test_operator_precedence_parsing() {
         ("a * b / c", "((a * b) / c)"),
         ("a + b / c", "(a + (b / c))"),
         ("a + b * c + d / e - f", "(((a + (b * c)) + (d / e)) - f)"),
-        ("3 + 4; -5 * 5", "(3 + 4)((-5) * 5)"),
+        ("3 + 4\n-5 * 5", "(3 + 4)((-5) * 5)"),
         ("5 > 4 == 3 < 4", "((5 > 4) == (3 < 4))"),
         ("5 > 4 != 3 < 4", "((5 > 4) != (3 < 4))"),
         (
@@ -347,6 +347,28 @@ end
 }
 
 #[test]
+fn test_conditional_true() {
+    let input = r#"
+    if true 
+      10 
+    end
+    "#;
+
+    let lexer = Lexer::new(input);
+    let mut parser = Parser::new(lexer);
+    let result = parser.parse();
+
+    assert!(
+        result.is_ok(),
+        "Unexpected error: {:?}",
+        result.unwrap_err()
+    );
+    let program = result.unwrap();
+
+    assert_eq!(program.body.len(), 1);
+}
+
+#[test]
 fn test_conditional_with_no_body() {
     let input = r#"
 evaluate x exceeds 0
@@ -365,17 +387,6 @@ end
     let program = result.unwrap();
 
     assert_eq!(program.body.len(), 1);
-    // match &program.body[0] {
-    //     Expression::Conditional {
-    //         then_branch,
-    //         else_branch,
-    //         ..
-    //     } => {
-    //         assert!(then_branch.statements.is_empty());
-    //         assert!(else_branch.is_none());
-    //     }
-    //     _ => panic!("Expected Conditional"),
-    // }
 }
 
 #[test]
@@ -453,7 +464,22 @@ fn test_call_expression() {
 boost_moral leverage "pizza party"
 "#;
 
-    let lexer = Lexer::new(input);
+    let script = r#"
+    let adder = plan a b =
+      return a + b
+
+    adder leverage 5 adder leverage 1 1   
+    "#;
+    //     let script = r#"
+    // let add = plan a b to
+    //   return a + b
+    //   end
+
+    // add leverage 5
+
+    // "#;
+
+    let lexer = Lexer::new(script);
     let mut parser = Parser::new(lexer);
     let result = parser.parse();
 

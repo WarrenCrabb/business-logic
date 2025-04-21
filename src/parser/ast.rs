@@ -4,7 +4,7 @@ use crate::token::Token;
 
 /// AST nodes for Business Logic language
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum Expression {
     Identifier(Identifier),
     Literal(Literal),
@@ -93,7 +93,7 @@ impl fmt::Display for Expression {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum Literal {
     Number(i64),
     String(String),
@@ -110,7 +110,7 @@ impl fmt::Display for Literal {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Block {
     pub statements: Vec<Statement>,
 }
@@ -124,7 +124,7 @@ impl fmt::Display for Block {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Identifier {
     pub value: String,
 }
@@ -141,7 +141,7 @@ impl fmt::Display for Identifier {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum Statement {
     VariableDeclaration {
         identifier: Identifier,
@@ -165,7 +165,7 @@ impl fmt::Display for Statement {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Default)]
 pub struct Program {
     pub body: Vec<Statement>,
 }

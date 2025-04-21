@@ -1,4 +1,13 @@
-use std::{fmt, hash::Hash};
+use std::{
+    fmt::{self, Display},
+    hash::Hash,
+};
+
+use environment::Env;
+
+use crate::parser::ast::{Block, Identifier};
+
+pub mod environment;
 
 pub const TRUE: Object = Object::Boolean(true);
 pub const FALSE: Object = Object::Boolean(false);
@@ -10,7 +19,39 @@ pub enum Object {
     Boolean(bool),
     String(String),
     ReturnValue(Box<Object>),
+    Function(Function),
     Null,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Function {
+    pub parameters: Vec<Identifier>,
+    pub body: Block,
+    pub env: Env,
+}
+
+impl Function {
+    pub fn new(parameters: Vec<Identifier>, body: Block, env: Env) -> Function {
+        Function {
+            parameters,
+            body,
+            env,
+        }
+    }
+}
+
+impl fmt::Display for Function {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let parameters: Vec<String> = self
+            .parameters
+            .clone()
+            .into_iter()
+            .map(|elem| format!("{}", elem))
+            .collect();
+        let parameters = parameters.join(", ");
+
+        write!(f, "fn({}) {{ {} }}", parameters, self.body)
+    }
 }
 
 impl Object {
@@ -20,6 +61,7 @@ impl Object {
             Object::Boolean(_) => "BOOLEAN",
             Object::String(_) => "STRING",
             Object::ReturnValue(_) => "RETURN_VALUE",
+            Object::Function(_) => "FUNCTION",
             Object::Null => "NULL",
         }
     }
@@ -32,6 +74,7 @@ impl fmt::Display for Object {
             Object::Boolean(val) => write!(f, "{}", val),
             Object::String(val) => write!(f, "{}", val),
             Object::ReturnValue(val) => write!(f, "{}", val),
+            Object::Function(val) => write!(f, "{}", val),
             Object::Null => write!(f, "null"),
         }
     }

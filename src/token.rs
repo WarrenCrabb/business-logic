@@ -2,7 +2,7 @@ use std::collections::{HashMap, HashSet};
 use std::fmt;
 use std::sync::LazyLock;
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub enum Token {
     ILLEGAL,
     EOF,
@@ -12,8 +12,6 @@ pub enum Token {
     STRING(String),
     BOOLEAN(bool),
 
-    // OPERATOR(Operator),
-    // KEYWORD(String),
     BIND,
     DECLARATION,
     RETURN,
@@ -28,7 +26,7 @@ pub enum Token {
     IF,
     ELIF,
     ELSE,
-    SEMICOLON,
+    // SEMICOLON,
     COMMA,
 
     EOL,
@@ -132,29 +130,9 @@ impl Token {
 }
 
 pub static MULTIWORD_OPERATORS: LazyLock<HashSet<&'static str>> = LazyLock::new(|| {
-    [
-        "touch base",
-        "greater than",
-        "less than",
-        // "value-add",  // add
-        // "add",        // add
-        // "increase",   // add
-        // "plus",       // add
-        // "reduce",     // subtract
-        // "streamline", // subtract
-        // "subtract",   // subtract
-        // "cut",        // subtract
-        // "multiply",   // multiply
-        // "amplify",    // multiply
-        // "boost",      // multiply
-        // "divide",     // divide
-        // "disrupt",    // divide
-        // "remainder",  // modulo
-        // "modulo",     // modulo
-        // "surplus",    // modulo
-    ]
-    .into_iter()
-    .collect()
+    ["touch base", "greater than", "less than"]
+        .into_iter()
+        .collect()
 });
 
 pub static MAX_OP_LEN: LazyLock<usize> = LazyLock::new(|| {
@@ -197,16 +175,19 @@ pub static KEYWORD_MAP: LazyLock<HashMap<&'static str, Token>> = LazyLock::new(|
         ("to", Token::BIND),
         ("as", Token::BIND),
         // conditional
+        ("if", Token::IF),
         ("evaluate", Token::IF),
+        ("elif", Token::ELIF),
         ("re-evaluate", Token::ELIF),
         ("pivot", Token::ELSE),
+        ("else", Token::ELSE),
         // comparison
+        ("is", Token::EQ),
+        ("equals", Token::EQ),
         ("less", Token::LT),
         ("below", Token::LT),
         ("above", Token::GT),
         ("exceeds", Token::GT),
-        ("is", Token::EQ),
-        ("equals", Token::EQ),
         ("achieving", Token::GEQ),
         ("productive", Token::GEQ),
         ("unproductive", Token::LEQ),
@@ -231,12 +212,14 @@ pub static KEYWORD_MAP: LazyLock<HashMap<&'static str, Token>> = LazyLock::new(|
         // Modulo
         ("modulo", Token::MODULO),
         ("remainder", Token::MODULO),
+        ("surplus", Token::MODULO),
         // boolean
         ("not", Token::NEGATE),
         ("true", Token::BOOLEAN(true)),
         ("actionable", Token::BOOLEAN(true)),
         ("false", Token::BOOLEAN(false)),
         ("headwinds", Token::BOOLEAN(false)),
+        ("empty", Token::STRING(String::from(""))),
         ("end", Token::END),
     ])
 });
@@ -368,7 +351,7 @@ impl fmt::Display for Token {
             Token::IF => write!(f, "if"),
             Token::ELIF => write!(f, "elif"),
             Token::ELSE => write!(f, "else"),
-            Token::SEMICOLON => write!(f, ":"),
+            // Token::SEMICOLON => write!(f, ";"),
             Token::EOL => write!(f, "\\n"),
             Token::PLUS => write!(f, "+"),
             Token::MINUS => write!(f, "-"),

@@ -67,7 +67,8 @@ impl Lexer {
 
         let token = match self.ch {
             '\n' => Token::EOL,
-            ';' => Token::END,
+            // ';' => Token::END,
+            // ';' => Token::SEMICOLON,
             '+' => Token::PLUS,
             '-' => Token::MINUS,
             '*' => Token::MULTIPLY,

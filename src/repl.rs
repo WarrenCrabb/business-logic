@@ -4,9 +4,11 @@ const PROMPT: &str = ">> ";
 
 use crate::evaluator::eval;
 use crate::lexer::Lexer;
+use crate::object::environment::Env;
 use crate::parser::Parser;
 
 pub fn start<R: BufRead, W: Write>(mut reader: R, mut writer: W) -> io::Result<()> {
+    let env = Env::default();
     loop {
         // Write the prompt.
         write!(writer, "{}", PROMPT)?;
@@ -33,7 +35,7 @@ pub fn start<R: BufRead, W: Write>(mut reader: R, mut writer: W) -> io::Result<(
 
         let program = result.unwrap();
 
-        let evaluated = eval(program);
+        let evaluated = eval(program, &env);
 
         if evaluated.is_err() {
             let e = evaluated.unwrap_err();

@@ -19,6 +19,20 @@ pub struct Parser {
 }
 
 impl Parser {
+    pub fn new_parser(input: String) -> Parser {
+        let lexer = Lexer::new(&input);
+
+        let mut parser = Parser {
+            lexer,
+            errors: vec![],
+            current: Token::EOF,
+            peek_token: Token::EOF,
+        };
+
+        parser.advance(); // Initialize current token
+        parser.advance(); // Initialize peek token
+        parser
+    }
     pub fn new(lexer: Lexer) -> Self {
         let mut parser = Parser {
             lexer,

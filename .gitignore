@@ -1,2 +1,6 @@
 /interpreter/target
+/wasm/target
+/wasm/pkg
+
+.node_modules
 

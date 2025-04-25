@@ -5,4 +5,6 @@ actualize max align plan a b to
     deliver b
   end
 
-return max invoke 20 100
+let r align max invoke 20 100
+
+print invoke r

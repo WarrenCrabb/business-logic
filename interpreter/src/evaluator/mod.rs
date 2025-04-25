@@ -20,6 +20,7 @@ mod tests;
 #[derive(Default)]
 pub struct Evaluator {
     pub output_buffer: String,
+    env: Env,
 }
 
 type EvaluationResult = Result<Object, EvaluationError>;
@@ -33,6 +34,19 @@ impl Evaluator {
         let mut result = Object::Null;
         for statement in program.body {
             let value = self.eval_statement(statement, env)?;
+
+            match value {
+                Object::ReturnValue(value) => return Ok(*value),
+                _ => result = value,
+            }
+        }
+
+        Ok(result)
+    }
+    pub fn eval_program(&mut self, program: Program) -> EvaluationResult {
+        let mut result = Object::Null;
+        for statement in program.body {
+            let value = self.eval_statement(statement, &Rc::clone(&self.env))?;
 
             match value {
                 Object::ReturnValue(value) => return Ok(*value),

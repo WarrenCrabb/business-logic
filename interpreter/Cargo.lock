@@ -3,5 +3,5 @@
 version = 4
 
 [[package]]
-name = "business_logic"
+name = "interpreter"
 version = "0.1.0"

@@ -1,0 +1,14 @@
+[package]
+name = "wasm"
+version = "0.1.0"
+edition = "2024"
+
+
+# needed for target wasm type
+[lib]
+crate-type = ["cdylib"]
+
+
+[dependencies]
+interpreter = { path = "../interpreter" }
+wasm-bindgen = "0.2.100"

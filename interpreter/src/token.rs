@@ -156,6 +156,7 @@ pub static KEYWORD_MAP: LazyLock<HashMap<&'static str, Token>> = LazyLock::new(|
         ("execute", Token::RETURN),
         ("deliver", Token::RETURN),
         // fn
+        ("fn", Token::FUNCTION),
         ("plan", Token::FUNCTION),
         ("strategize", Token::FUNCTION),
         ("strat", Token::FUNCTION),
@@ -165,6 +166,7 @@ pub static KEYWORD_MAP: LazyLock<HashMap<&'static str, Token>> = LazyLock::new(|
         ("utilize", Token::CALL),
         ("engage", Token::CALL),
         ("activate", Token::CALL),
+        ("invoke", Token::CALL),
         //loops
         ("while", Token::WHILE),
         ("until", Token::WHILE),

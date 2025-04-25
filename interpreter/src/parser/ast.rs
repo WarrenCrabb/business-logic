@@ -2,8 +2,6 @@ use core::fmt;
 
 use crate::token::Token;
 
-/// AST nodes for Business Logic language
-
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum Expression {
     Identifier(Identifier),
@@ -33,21 +31,9 @@ pub enum Expression {
     },
     // Continue,
     // Break,
-    // Assignment {
-    //     name: String,
-    //     value: Expression,
-    // },
     // Loop {
     //     condition: Expression,
     //     body: Block,
-    // },
-    // Conditional {
-    //     condition: Expression,
-    //     then_branch: Block,
-    //     else_branch: Option<Block>,
-    // },
-    // Print {
-    //     value: Expression,
     // },
 }
 

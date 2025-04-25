@@ -1,0 +1,8 @@
+actualize max align plan a b to
+  evaluate a exceeds b
+    deliver a
+  pivot
+    deliver b
+  end
+
+return max invoke 20 100

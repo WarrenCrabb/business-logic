@@ -1,0 +1,13 @@
+
+actualize make_adder align plan a to
+  deliver fn b to 
+    deliver a + b
+  
+
+let add_five = make_adder invoke 5
+
+let res = add_five invoke 2
+
+print invoke res
+
+return "END"

@@ -1,0 +1,12 @@
+
+
+let rec = fn n =
+  if n == 1
+    return 1
+  else
+    return n * rec invoke n - 1
+  end
+
+let r = rec invoke 5
+
+return r

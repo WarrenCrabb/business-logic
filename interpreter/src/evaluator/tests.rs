@@ -1,11 +1,10 @@
 use std::fmt::Error;
-use std::sync::RwLock;
 
-use crate::evaluator::eval;
 use crate::object::environment::Env;
 use crate::object::{NULL, Object};
-// use crate::parser::ast::{Expression, Literal, Statement};
 use crate::{lexer::Lexer, parser::Parser};
+
+use super::Evaluator;
 
 fn setup_eval(input: &str) -> Result<Object, Error> {
     let l = Lexer::new(&input);
@@ -15,7 +14,9 @@ fn setup_eval(input: &str) -> Result<Object, Error> {
     if program.is_ok() {
         let env = Env::default();
 
-        let eval_result = eval(program.unwrap(), &env);
+        let mut evaluator = Evaluator::default();
+
+        let eval_result = evaluator.eval(program.unwrap(), &env);
 
         if eval_result.is_ok() {
             Ok(eval_result.unwrap())

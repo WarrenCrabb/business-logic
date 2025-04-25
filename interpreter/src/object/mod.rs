@@ -1,12 +1,12 @@
 use std::{
-    fmt::{self, Display},
+    fmt::{self},
     hash::Hash,
 };
 
 use environment::Env;
 
+use crate::evaluator::builtin::Builtin;
 use crate::parser::ast::{Block, Identifier};
-
 pub mod environment;
 
 pub const TRUE: Object = Object::Boolean(true);
@@ -20,6 +20,7 @@ pub enum Object {
     String(String),
     ReturnValue(Box<Object>),
     Function(Function),
+    Builtin(Builtin),
     Null,
 }
 
@@ -62,6 +63,7 @@ impl Object {
             Object::String(_) => "STRING",
             Object::ReturnValue(_) => "RETURN_VALUE",
             Object::Function(_) => "FUNCTION",
+            Object::Builtin(_) => "BUILTIN",
             Object::Null => "NULL",
         }
     }
@@ -75,6 +77,7 @@ impl fmt::Display for Object {
             Object::String(val) => write!(f, "{}", val),
             Object::ReturnValue(val) => write!(f, "{}", val),
             Object::Function(val) => write!(f, "{}", val),
+            Object::Builtin(val) => write!(f, "{}", val),
             Object::Null => write!(f, "null"),
         }
     }

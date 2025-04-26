@@ -1,12 +1,12 @@
 
-actualize make_adder align plan a to
-  deliver fn b to 
-    deliver a + b
+actualize make_adder align strategy a as
+  deliver plan b to 
+    synergize a + b
   
 
-let add_five = make_adder invoke 5
+initiate add_five with make_adder leveraging 5
 
-let res = add_five invoke 2
+let res = add_five utilize 2
 
 print invoke res
 

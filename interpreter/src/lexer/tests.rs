@@ -68,11 +68,11 @@ fn test_more_tokens() {
     let source = r#"
 strategize main with no deliverables
     actualize synergyScore align 100
-	  touch base with "Quarterly optimization"
+	  print with "Quarterly optimization"
 
 	while momentum below synergyScore
-		touch base with "Driving momentum..."
-		momentum align momentum value-add 10
+		print with "Driving momentum..."
+		momentum align momentum value_add 10
 	end
 end
 
@@ -94,7 +94,10 @@ execute
         Token::BIND,
         Token::NUMBER(100),
         Token::EOL,
-        Token::STDOUT,
+        // Token::STDOUT,
+        Token::IDENTIFIER(String::from("print")),
+        // Token::IDENTIFIER(String::from("touch")),
+        // Token::IDENTIFIER(String::from("base")),
         Token::BIND,
         // Token::KEYWORD(String::from("with")),
         Token::STRING(String::from("Quarterly optimization")),
@@ -109,7 +112,8 @@ execute
         Token::IDENTIFIER(String::from("synergyScore")),
         Token::EOL,
         Token::INDENT,
-        Token::STDOUT,
+        // Token::STDOUT,
+        Token::IDENTIFIER(String::from("print")),
         Token::BIND,
         // Token::KEYWORD(String::from("with")),
         Token::STRING(String::from("Driving momentum...")),
@@ -143,7 +147,7 @@ execute
 
 #[test]
 fn test_assignment_and_operators() {
-    let input = "actualize synergyScore to 100 value-add 10";
+    let input = "actualize synergyScore to 100 value_add 10";
     let mut lexer = Lexer::new(input);
     let tests = vec![
         Token::DECLARATION,
@@ -200,7 +204,7 @@ fn test_conditional_branches() {
     let input = r#"
 evaluate x > 5
 	false
-re-evaluate x above 3
+re_evaluate x above 3
 	false
 pivot
 	true 

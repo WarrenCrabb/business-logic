@@ -25,6 +25,7 @@ impl Builtin {
         match ident {
             "len" => Some(Object::Builtin(Builtin::Len)),
             "print" => Some(Object::Builtin(Builtin::Print)),
+            "touch_base" => Some(Object::Builtin(Builtin::Print)),
             _ => None,
         }
     }

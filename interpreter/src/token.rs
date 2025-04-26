@@ -49,8 +49,7 @@ pub enum Token {
     GEQ,
     MODULO,
 
-    STDOUT,
-
+    // STDOUT,
     INDENT,
     DEDENT,
 
@@ -116,7 +115,7 @@ impl Token {
             // "disrupt" => Some(Token::DIVIDE),
             // "remainder" => Some(Token::MODULO),
             // "modulo" => Some(Token::MODULO),
-            "touch base" => Some(Token::STDOUT),
+            // "touch base" => Some(Token::STDOUT),
             _ => None,
         }
     }
@@ -160,9 +159,11 @@ pub static KEYWORD_MAP: LazyLock<HashMap<&'static str, Token>> = LazyLock::new(|
         ("plan", Token::FUNCTION),
         ("strategize", Token::FUNCTION),
         ("strat", Token::FUNCTION),
+        ("strategy", Token::FUNCTION),
         ("blueprint", Token::FUNCTION),
         // fn call
         ("leverage", Token::CALL),
+        ("leveraging", Token::CALL),
         ("utilize", Token::CALL),
         ("engage", Token::CALL),
         ("activate", Token::CALL),
@@ -180,7 +181,7 @@ pub static KEYWORD_MAP: LazyLock<HashMap<&'static str, Token>> = LazyLock::new(|
         ("if", Token::IF),
         ("evaluate", Token::IF),
         ("elif", Token::ELIF),
-        ("re-evaluate", Token::ELIF),
+        ("re_evaluate", Token::ELIF),
         ("pivot", Token::ELSE),
         ("else", Token::ELSE),
         // comparison
@@ -196,7 +197,7 @@ pub static KEYWORD_MAP: LazyLock<HashMap<&'static str, Token>> = LazyLock::new(|
         ("ineffectual", Token::LEQ),
         // Add
         ("add", Token::PLUS),
-        ("value-add", Token::PLUS),
+        ("value_add", Token::PLUS),
         ("increase", Token::PLUS),
         ("plus", Token::PLUS),
         // Subtract
@@ -374,7 +375,7 @@ impl fmt::Display for Token {
             Token::LPAREN => write!(f, "("),
             Token::RPAREN => write!(f, ")"),
 
-            Token::STDOUT => write!(f, "PRINT"),
+            // Token::STDOUT => write!(f, "PRINT"),
             Token::INDENT => write!(f, "INDENT"),
             Token::DEDENT => write!(f, "DEDENT"),
             Token::BLANK => write!(f, "BLANK"),

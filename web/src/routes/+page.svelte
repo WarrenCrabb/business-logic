@@ -17,8 +17,6 @@
 			});
 			const r = lib.eval_business_logic(_v);
 
-			// const res = new Date().toUTCString();
-
 			results.push(`> ${r}`);
 		} catch (error) {
 			results.push(error as string);
@@ -38,13 +36,25 @@ actualize res = add_five utilize 2
 touch_base invoke res
   `;
 
+	const m = `
+actualize max_value align plan a b as
+  evaluate a exceeds b
+    deliver a
+  pivot
+    deliver b
+  end
+
+let r align max_value invoke 20 100
+
+print invoke r
+`;
+
 	onMount(async () => {
 		lib = await import('wasm');
 		await lib.default();
 
 		my_editor = editor.create(editorContainer, {
-			// value: 'print invoke "Hello, World"',
-			value: s,
+			value: m,
 			language: 'business_logic',
 			theme: 'vs-dark'
 		});
@@ -174,7 +184,9 @@ touch_base invoke res
 	});
 </script>
 
-<div class="w-full" bind:this={editorContainer} style="height: 500px;"></div>
+<div class="m-4">
+	<div class="h-96 w-full" bind:this={editorContainer}></div>
+</div>
 
 <button class="hover:cursor-pointer" aria-label="run" onclick={getVal}>
 	<svg
@@ -200,7 +212,4 @@ touch_base invoke res
 			</li>
 		{/each}
 	</ul>
-	<!-- <pre>
-	<code>{results}</code>
-  </pre> -->
 </div>

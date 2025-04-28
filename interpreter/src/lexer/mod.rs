@@ -193,8 +193,6 @@ impl Lexer {
         )
     }
 
-    // fn measure_visual_indent()
-
     fn count_indents(&mut self) -> Option<Token> {
         if self.col == 1 {
             let mut count_indent = 0;
@@ -205,7 +203,6 @@ impl Lexer {
                     '\t' => TAB_WIDTH,
                     _ => 0,
                 };
-                // count_indent += 1;
                 self.read_char();
             }
 
@@ -231,7 +228,6 @@ impl Lexer {
 
     fn skip_whitespace(&mut self) {
         while self.ch == ' ' || self.ch == '\t' {
-            //|| self.ch == '\n' || self.ch == '\r' {
             self.read_char();
         }
     }

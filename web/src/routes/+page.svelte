@@ -54,7 +54,7 @@ print invoke r
 		await lib.default();
 
 		my_editor = editor.create(editorContainer, {
-			value: m,
+			value: s,
 			language: 'business_logic',
 			theme: 'vs-dark'
 		});

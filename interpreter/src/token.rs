@@ -26,7 +26,6 @@ pub enum Token {
     IF,
     ELIF,
     ELSE,
-    // SEMICOLON,
     COMMA,
 
     EOL,
@@ -81,41 +80,11 @@ pub static END_TOKENS: LazyLock<Vec<Token>> =
 impl Token {
     pub fn from_str(s: &str) -> Option<Token> {
         match s {
-            // "+" => Some(Token::PLUS),
-            // "-" => Some(Token::MINUS),
-            // "*" => Some(Token::MULTIPLY),
-            // "/" => Some(Token::DIVIDE),
-            // "!" => Some(Token::NEGATE),
-            // "&&" => Some(Token::AND),
-            // "||" => Some(Token::OR),
-            // "<" => Some(Token::LT),
-            // ">" => Some(Token::GT),
-            // "!=" => Some(Token::NEQ),
-            // "<=" => Some(Token::LEQ),
-            // ">=" => Some(Token::GEQ),
-            // "%" => Some(Token::MODULO),
             "greater than" => Some(Token::GT),
             "less than" => Some(Token::LT),
-            // "equals" => Some(Token::EQ),
             "not equal" => Some(Token::NEQ),
             "less than or equal to" => Some(Token::LEQ),
             "greater than or equal to" => Some(Token::GEQ),
-            // "value-add" => Some(Token::PLUS),
-            // "add" => Some(Token::PLUS),
-            // "increase" => Some(Token::PLUS),
-            // "plus" => Some(Token::PLUS),
-            // "reduce" => Some(Token::MINUS),
-            // "streamline" => Some(Token::MINUS),
-            // "subtract" => Some(Token::MINUS),
-            // "cut" => Some(Token::MINUS),
-            // "multiply" => Some(Token::MULTIPLY),
-            // "amplify" => Some(Token::MULTIPLY),
-            // "boost" => Some(Token::MULTIPLY),
-            // "divide" => Some(Token::DIVIDE),
-            // "disrupt" => Some(Token::DIVIDE),
-            // "remainder" => Some(Token::MODULO),
-            // "modulo" => Some(Token::MODULO),
-            // "touch base" => Some(Token::STDOUT),
             _ => None,
         }
     }
@@ -303,34 +272,6 @@ impl Token {
             .cloned()
             .unwrap_or(Token::IDENTIFIER(ident))
     }
-
-    // pub fn lookup_keyword(ident: String) -> Token {
-    //     match ident.as_str() {
-    //         "let" | "actualize" | "initiate" => Token::DECLARATION,
-    //         "return" | "synergize" | "execute" | "deliver" => Token::RETURN,
-    //         "plan" | "strategize" | "strat" => Token::FUNCTION,
-    //         "unrealized" => Token::NULL,
-    //         "align" | "with" | "to" | "as" => Token::BIND,
-    //         "evaluate" => Token::IF,
-    //         "re-evaluate" => Token::ELIF,
-    //         "pivot" => Token::ELSE,
-    //         "below" => Token::LT,
-    //         "above" | "exceeds" => Token::GT,
-    //         "is" | "equals" => Token::EQ,
-    //         "achieving" | "productive" => Token::GEQ,
-    //         "unproductive" | "ineffectual" => Token::LEQ,
-    //         "add" | "value-add" | "increase" | "plus" => Token::PLUS,
-    //         "reduce" | "streamline" | "subtract" | "cut" => Token::MINUS,
-    //         "multiply" | "amplify" | "boost" => Token::MULTIPLY,
-    //         "divide" | "disrupt" => Token::DIVIDE,
-    //         "modulo" | "remainder" => Token::MODULO,
-    //         "end" => Token::END,
-    //         "true" | "actionable" => Token::BOOLEAN(true),
-    //         "false" => Token::BOOLEAN(false),
-    //         s if KEYWORDS.contains(s) => Token::KEYWORD(ident),
-    //         _ => Token::IDENTIFIER(ident),
-    //     }
-    // }
 }
 
 impl fmt::Display for Token {
@@ -344,7 +285,6 @@ impl fmt::Display for Token {
             Token::BOOLEAN(b) => write!(f, "BOOLEAN({})", b),
             Token::DECLARATION => write!(f, "DECLARTION"),
 
-            // Token::KEYWORD(k) => write!(f, "KEYWORD({})", k),
             Token::BIND => write!(f, "="),
             Token::COMMA => write!(f, ","),
             Token::RETURN => write!(f, "return"),
@@ -354,7 +294,6 @@ impl fmt::Display for Token {
             Token::IF => write!(f, "if"),
             Token::ELIF => write!(f, "elif"),
             Token::ELSE => write!(f, "else"),
-            // Token::SEMICOLON => write!(f, ";"),
             Token::EOL => write!(f, "\\n"),
             Token::PLUS => write!(f, "+"),
             Token::MINUS => write!(f, "-"),
@@ -375,7 +314,6 @@ impl fmt::Display for Token {
             Token::LPAREN => write!(f, "("),
             Token::RPAREN => write!(f, ")"),
 
-            // Token::STDOUT => write!(f, "PRINT"),
             Token::INDENT => write!(f, "INDENT"),
             Token::DEDENT => write!(f, "DEDENT"),
             Token::BLANK => write!(f, "BLANK"),

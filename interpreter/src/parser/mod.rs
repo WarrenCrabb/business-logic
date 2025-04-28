@@ -29,8 +29,8 @@ impl Parser {
             peek_token: Token::EOF,
         };
 
-        parser.advance(); // Initialize current token
-        parser.advance(); // Initialize peek token
+        parser.advance();
+        parser.advance();
         parser
     }
     pub fn new(lexer: Lexer) -> Self {
@@ -41,8 +41,8 @@ impl Parser {
             peek_token: Token::EOF,
         };
 
-        parser.advance(); // Initialize current token
-        parser.advance(); // Initialize peek token
+        parser.advance();
+        parser.advance();
         parser
     }
 
@@ -210,11 +210,7 @@ impl Parser {
 
         self.advance();
 
-        // if let ret = self.parse_return_statement() {}
-
         if self.current == Token::RETURN {
-            // self.advance();
-
             let e = self.parse_return_statement()?;
 
             let body = Block {
@@ -308,28 +304,8 @@ impl Parser {
             self.errors
                 .push(format!("Expected Operator but got {:?}", self.current));
             panic!("Expected Operator but got {:?}", self.current);
-            // Operator
         }
-        // match &self.peek_token {
-        //     Token::OPERATOR(op) => Some(op.clone()),
-        //     _ => None,
-        // }
     }
-
-    // fn expect_operator(&mut self) -> Operator {
-    //     if let Token::OPERATOR(op) = &self.current {
-    //         op.clone()
-    //     } else {
-    //         self.errors
-    //             .push(format!("Expected Operator but got {:?}", self.current));
-    //         panic!("Expected Operator but got {:?}", self.current);
-    //         // Operator
-    //     }
-    //     // match &self.peek_token {
-    //     //     Token::OPERATOR(op) => Some(op.clone()),
-    //     //     _ => None,
-    //     // }
-    // }
 
     fn expect_peek(&mut self, expected: Token) -> Result<(), ParserError> {
         if self.peek_token == expected {
@@ -342,12 +318,4 @@ impl Parser {
             )))
         }
     }
-
-    // fn peek_error(&mut self, expected: Token) {
-    //     let msg = format!(
-    //         "Expected token {:?}, but got {:?}",
-    //         expected, self.peek_token
-    //     );
-    //     self.errors.push(msg);
-    // }
 }
